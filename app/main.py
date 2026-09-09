@@ -3,7 +3,6 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.types import BotCommand
 from .config import load_settings
 from .db import Database
 from .middlewares import DependenciesMiddleware, RateLimitMiddleware
@@ -30,7 +29,8 @@ async def main():
     dp.include_router(extra_router)
     dp.include_router(features_router)
     dp.include_router(user_router)
-    await bot.set_my_commands([BotCommand(command='start', description='Bosh menyu'), BotCommand(command='help', description='Yordam'), BotCommand(command='search', description='Anime qidirish'), BotCommand(command='anime', description='Anime ro‘yxati'), BotCommand(command='favorites', description='Sevimlilar'), BotCommand(command='admin', description='Admin panel')])
+    # Remove Telegram's slash-command menu. Navigation is provided by the bot's own keyboard.
+    await bot.set_my_commands([])
     try:
         await bot.delete_webhook(drop_pending_updates=False)
         me = await bot.get_me()
