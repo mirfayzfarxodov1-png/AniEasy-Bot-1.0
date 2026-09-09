@@ -7,6 +7,7 @@ from .config import load_settings
 from .db import Database
 from .middlewares import DependenciesMiddleware, RateLimitMiddleware
 from .handlers_gate import router as gate_router
+from .handlers_webapp import router as webapp_router
 from .handlers_user import router as user_router
 from .handlers_admin import router as admin_router
 from .handlers_extra import router as extra_router
@@ -25,11 +26,11 @@ async def main():
     dp.message.middleware(dep)
     dp.callback_query.middleware(dep)
     dp.include_router(gate_router)
+    dp.include_router(webapp_router)
     dp.include_router(admin_router)
     dp.include_router(extra_router)
     dp.include_router(features_router)
     dp.include_router(user_router)
-    # Remove Telegram's slash-command menu. Navigation is provided by the bot's own keyboard.
     await bot.set_my_commands([])
     try:
         await bot.delete_webhook(drop_pending_updates=False)
