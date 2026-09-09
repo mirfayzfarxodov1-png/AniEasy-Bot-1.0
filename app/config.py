@@ -12,6 +12,7 @@ class Settings:
     owner_id: int | None
     channel_id: int | None
     log_channel_id: int | None
+    mandatory_channels: tuple[str, ...]
     pagination_size: int
     description_template: str
     log_level: str
@@ -37,6 +38,7 @@ def load_settings() -> Settings:
     token = (os.getenv('BOT_TOKEN') or '').strip()
     if not token:
         raise RuntimeError('BOT_TOKEN .env faylida berilmagan.')
+    mandatory = tuple(x.strip() for x in (os.getenv('MANDATORY_CHANNELS') or '').split(',') if x.strip())
     return Settings(
         bot_token=token,
         database_url=(os.getenv('DATABASE_URL') or 'sqlite+aiosqlite:///./anime_bot.db').strip(),
@@ -44,6 +46,7 @@ def load_settings() -> Settings:
         owner_id=_optional_int(os.getenv('OWNER_ID') or ''),
         channel_id=_optional_int(os.getenv('CHANNEL_ID') or ''),
         log_channel_id=_optional_int(os.getenv('LOG_CHANNEL_ID') or ''),
+        mandatory_channels=mandatory,
         pagination_size=_int_env('PAGINATION_SIZE', 10, 1, 50),
         description_template=(os.getenv('DESCRIPTION_TEMPLATE') or '🎬 {anime_name}\n📺 {episode}-qism'),
         log_level=(os.getenv('LOG_LEVEL') or 'INFO').upper(),
