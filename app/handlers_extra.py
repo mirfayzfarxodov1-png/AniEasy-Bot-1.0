@@ -5,19 +5,23 @@ from sqlalchemy import select
 from .keyboards import admin_menu, ikb, inline_home
 from .states import EditAnime
 from .models import Anime
+from .access import is_admin
 
 router=Router()
 
-def ok(uid,s): return uid in s.admin_ids
+def ok(uid,s): return is_admin(uid,s)
 
 @router.callback_query(F.data=='genres')
 async def genres_callback(c:CallbackQuery,db,settings):
-    vals=(await db.session.execute(select(Anime.genre).where(Anime.genre.is_not(None),Anime.status!='deleted'))).scalars().all(); genres=sorted({part.strip() for value in vals for part in value.split(',') if part.strip()}); text='🎭 <b>Janrlar</b>\n\n'+('\n'.join(f'• {g}' for g in genres) if genres else 'Janrlar hali kiritilmagan.')
+    vals=(await db.session.execute(select(Anime.genre).where(Anime.genre.is_not(None),Anime.status!='deleted'))).scalars().all()
+    genres=sorted({part.strip() for value in vals if value for part in value.split(',') if part.strip()})
+    text='🎭 <b>Janrlar</b>\n\n'+('\n'.join(f'• {g}' for g in genres) if genres else 'Janrlar hali kiritilmagan.')
     await c.message.edit_text(text,reply_markup=inline_home(ok(c.from_user.id,settings))); await c.answer()
 
 @router.callback_query(F.data=='profile')
 async def profile_callback(c:CallbackQuery,db,settings):
-    u=await db.user.upsert(c.from_user.id,c.from_user.username,c.from_user.first_name,ok(c.from_user.id,settings)); favs=len(await db.fav.list(u.id)); await c.message.edit_text(f'👤 <b>Profil</b>\n\n🆔 <code>{u.telegram_id}</code>\n👤 {u.first_name or "Noma’lum"}\n⭐ Sevimlilar: {favs}\n🟢 Holat: faol',reply_markup=inline_home(ok(c.from_user.id,settings))); await c.answer()
+    u=await db.user.upsert(c.from_user.id,c.from_user.username,c.from_user.first_name,ok(c.from_user.id,settings)); favs=len(await db.fav.list(u.id))
+    await c.message.edit_text(f'👤 <b>Profil</b>\n\n🆔 <code>{u.telegram_id}</code>\n👤 {u.first_name or "Noma’lum"}\n⭐ Sevimlilar: {favs}\n🟢 Holat: faol',reply_markup=inline_home(ok(c.from_user.id,settings))); await c.answer()
 
 @router.callback_query(F.data=='continue')
 async def continue_callback(c:CallbackQuery,db,settings):
