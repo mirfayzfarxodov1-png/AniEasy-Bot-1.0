@@ -10,6 +10,7 @@ from .middlewares import DependenciesMiddleware, RateLimitMiddleware
 from .handlers_user import router as user_router
 from .handlers_admin import router as admin_router
 from .handlers_extra import router as extra_router
+from .handlers_features import router as features_router
 
 async def main():
     settings = load_settings()
@@ -28,6 +29,7 @@ async def main():
     dp.callback_query.middleware(dep)
     dp.include_router(admin_router)
     dp.include_router(extra_router)
+    dp.include_router(features_router)
     dp.include_router(user_router)
     await bot.set_my_commands([
         BotCommand(command='start', description='Bosh menyu'),
@@ -38,7 +40,6 @@ async def main():
         BotCommand(command='admin', description='Admin panel')
     ])
     try:
-        # Polling old webhookni tozalaydi va /start update-larini qabul qilishga tayyorlaydi.
         await bot.delete_webhook(drop_pending_updates=False)
         me = await bot.get_me()
         logging.info('AniEasy Bot 1.0 online: @%s (id=%s)', me.username, me.id)
