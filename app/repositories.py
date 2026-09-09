@@ -10,7 +10,10 @@ class UserRepository:
         if not u:
             u=User(telegram_id=tg_id, username=username, first_name=first_name, is_admin=is_admin); self.s.add(u)
         else:
-            u.username=username; u.first_name=first_name; u.last_active=datetime.utcnow(); u.is_admin=is_admin
+            u.username=username; u.first_name=first_name; u.last_active=datetime.utcnow()
+            # Environment/owner access can grant admin, but a DB-managed admin must not be
+            # silently removed on every /start or callback.
+            u.is_admin = bool(u.is_admin or is_admin)
         await self.s.commit(); return u
 
 class AnimeRepository:
