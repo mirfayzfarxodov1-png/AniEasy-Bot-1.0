@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: anieasy-bot-preview
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -15,18 +19,18 @@ jobs:
   bot:
     name: Run AniEasy Bot 1.0
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 15
     env:
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       ADMIN_IDS: ${{ secrets.ADMIN_IDS }}
       OWNER_ID: ${{ secrets.OWNER_ID }}
       CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
       LOG_CHANNEL_ID: ${{ secrets.LOG_CHANNEL_ID }}
-      WEBAPP_URL: ${{ secrets.WEBAPP_URL }}
+      MANDATORY_CHANNELS: ${{ secrets.MANDATORY_CHANNELS }}
       PAGINATION_SIZE: "10"
       DESCRIPTION_TEMPLATE: "🎬 {anime_name}\n📺 {episode}-qism"
       LOG_LEVEL: "INFO"
-      DATABASE_URL: "sqlite+aiosqlite:///./anime_bot.db"
+      DATABASE_URL: sqlite+aiosqlite:///./anime_bot.db
     steps:
       - name: Checkout
         uses: actions/checkout@v4
