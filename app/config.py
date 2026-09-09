@@ -15,25 +15,37 @@ class Settings:
     pagination_size: int
     description_template: str
     log_level: str
+    webapp_url: str | None
+
 
 def _ids(value: str) -> frozenset[int]:
     return frozenset(int(x.strip()) for x in value.split(',') if x.strip())
 
+
 def _optional_int(value: str) -> int | None:
     return int(value) if value.strip() else None
 
+
+def _int_env(name: str, default: int, low: int, high: int) -> int:
+    try:
+        return max(low, min(high, int((os.getenv(name) or str(default)).strip())))
+    except (TypeError, ValueError):
+        return default
+
+
 def load_settings() -> Settings:
-    token = os.getenv('BOT_TOKEN', '').strip()
+    token = (os.getenv('BOT_TOKEN') or '').strip()
     if not token:
         raise RuntimeError('BOT_TOKEN .env faylida berilmagan.')
     return Settings(
         bot_token=token,
-        database_url=os.getenv('DATABASE_URL', 'sqlite+aiosqlite:///./anime_bot.db'),
-        admin_ids=_ids(os.getenv('ADMIN_IDS', '')),
-        owner_id=_optional_int(os.getenv('OWNER_ID', '')),
-        channel_id=_optional_int(os.getenv('CHANNEL_ID', '')),
-        log_channel_id=_optional_int(os.getenv('LOG_CHANNEL_ID', '')),
-        pagination_size=max(1, min(50, int(os.getenv('PAGINATION_SIZE', '10')))),
-        description_template=os.getenv('DESCRIPTION_TEMPLATE', '🎬 {anime_name}\n📺 {episode}-qism'),
-        log_level=os.getenv('LOG_LEVEL', 'INFO'),
+        database_url=(os.getenv('DATABASE_URL') or 'sqlite+aiosqlite:///./anime_bot.db').strip(),
+        admin_ids=_ids(os.getenv('ADMIN_IDS') or ''),
+        owner_id=_optional_int(os.getenv('OWNER_ID') or ''),
+        channel_id=_optional_int(os.getenv('CHANNEL_ID') or ''),
+        log_channel_id=_optional_int(os.getenv('LOG_CHANNEL_ID') or ''),
+        pagination_size=_int_env('PAGINATION_SIZE', 10, 1, 50),
+        description_template=(os.getenv('DESCRIPTION_TEMPLATE') or '🎬 {anime_name}\n📺 {episode}-qism'),
+        log_level=(os.getenv('LOG_LEVEL') or 'INFO').upper(),
+        webapp_url=(os.getenv('WEBAPP_URL') or '').strip() or None,
     )
