@@ -1,9 +1,14 @@
+import os
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from .config import Settings
 from .models import Base
 
 class Database:
     def __init__(self, settings: Settings):
+        # SQLite needs its parent directory to exist. Docker mounts ./data as a
+        # persistent volume, so anime/user/progress data survives container restarts.
+        if settings.database_url.startswith('sqlite'):
+            os.makedirs('/app/data' if os.path.isdir('/app') else './data', exist_ok=True)
         self.engine = create_async_engine(settings.database_url, pool_pre_ping=True)
         self.session_factory = async_sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
 
