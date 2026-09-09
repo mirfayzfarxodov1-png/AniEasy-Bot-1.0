@@ -20,3 +20,7 @@ class EditAnime(StatesGroup):
 class AdminManage(StatesGroup):
     add_id = State()
     remove_id = State()
+
+class Post(StatesGroup):
+    target = State()
+    content = State()
