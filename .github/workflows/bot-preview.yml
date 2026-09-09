@@ -27,10 +27,10 @@ jobs:
       CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
       LOG_CHANNEL_ID: ${{ secrets.LOG_CHANNEL_ID }}
       MANDATORY_CHANNELS: ${{ secrets.MANDATORY_CHANNELS }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
       PAGINATION_SIZE: "10"
       DESCRIPTION_TEMPLATE: "🎬 {anime_name}\n📺 {episode}-qism"
       LOG_LEVEL: "INFO"
-      DATABASE_URL: sqlite+aiosqlite:///./anime_bot.db
     steps:
       - name: Checkout
         uses: actions/checkout@v4
