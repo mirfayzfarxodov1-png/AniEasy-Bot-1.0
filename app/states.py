@@ -24,3 +24,6 @@ class AdminManage(StatesGroup):
 class Post(StatesGroup):
     target = State()
     content = State()
+
+class Request(StatesGroup):
+    anime = State()
