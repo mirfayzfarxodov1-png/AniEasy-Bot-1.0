@@ -3,15 +3,12 @@ from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from sqlalchemy import func, select
-from .keyboards import main_menu, inline_home, ikb, episodes_page, episode_nav
+from .keyboards import main_menu, inline_home, ikb, episodes_page, episode_nav, anime_actions
 from .states import Search
-from .models import Episode, User, Anime, WatchProgress
+from .models import Episode, Anime, WatchProgress
+from .access import is_admin
 
 router = Router()
-
-
-def is_admin(uid, settings):
-    return uid in settings.admin_ids or uid == settings.owner_id
 
 
 def home_text():
@@ -19,22 +16,11 @@ def home_text():
 
 
 async def send_home(m, settings, edit=False):
-    markup = main_menu(is_admin(m.from_user.id, settings), settings.webapp_url)
-    if edit and isinstance(m, Message):
-        await m.edit_text(home_text(), reply_markup=inline_home(is_admin(m.from_user.id, settings)))
+    admin = is_admin(m.from_user.id, settings)
+    if edit:
+        await m.edit_text(home_text(), reply_markup=inline_home(admin))
     else:
-        await m.answer(home_text(), reply_markup=markup)
-
-
-@router.message(Command('start'))
-async def start(m: Message, db, settings):
-    await db.user.upsert(m.from_user.id, m.from_user.username, m.from_user.first_name, is_admin(m.from_user.id, settings))
-    await send_home(m, settings)
-
-
-@router.message(F.text == '🏠 Bosh menyu')
-async def home_button(m: Message, settings):
-    await send_home(m, settings)
+        await m.answer(home_text(), reply_markup=main_menu(admin))
 
 
 @router.message(Command('help'))
@@ -46,8 +32,13 @@ async def help_cmd(m: Message, settings):
         '⭐ Sevimlilar — saqlangan anime\n🆕 Yangiliklar — oxirgi qo‘shilganlar\n'
         '📺 Davom ettirish — oxirgi ko‘rilgan qism\n👤 Profil — akkaunt va faollik\n'
         '🎭 Janrlar — janr bo‘yicha tanlash',
-        reply_markup=main_menu(is_admin(m.from_user.id, settings), settings.webapp_url),
+        reply_markup=main_menu(is_admin(m.from_user.id, settings)),
     )
+
+
+@router.message(F.text == '🏠 Bosh menyu')
+async def home_button(m: Message, settings):
+    await send_home(m, settings)
 
 
 @router.message(F.text == '🎬 Anime')
@@ -87,17 +78,24 @@ async def show_anime(m, db, settings, page=0, edit=False):
 
 @router.callback_query(F.data.startswith('anime_page:'))
 async def anime_page(c: CallbackQuery, db, settings):
-    await show_anime(c.message, db, settings, int(c.data.split(':')[1]), True)
+    try:
+        page = max(0, int(c.data.split(':', 1)[1]))
+    except (ValueError, IndexError):
+        return await c.answer('❌ Sahifa xatosi.', show_alert=True)
+    await show_anime(c.message, db, settings, page, True)
     await c.answer()
 
 
 @router.callback_query(F.data.startswith('anime:'))
 async def anime_detail(c: CallbackQuery, db, settings):
-    aid = int(c.data.split(':')[1])
+    try:
+        aid = int(c.data.split(':', 1)[1])
+    except (ValueError, IndexError):
+        return await c.answer('❌ Anime ID xatosi.', show_alert=True)
     a = await db.anime.get(aid)
-    n = await db.episodes.count(aid)
-    if not a:
+    if not a or a.status == 'deleted':
         return await c.answer('Anime topilmadi.', show_alert=True)
+    n = await db.episodes.count(aid)
     u = await db.user.upsert(c.from_user.id, c.from_user.username, c.from_user.first_name, is_admin(c.from_user.id, settings))
     favs = await db.fav.list(u.id)
     favorite = any(x.id == aid for x in favs)
@@ -108,15 +106,20 @@ async def anime_detail(c: CallbackQuery, db, settings):
         text += f'\n📅 Yil: {a.year}'
     if a.description:
         text += f'\n\n{a.description}'
-    from .keyboards import anime_actions
     await c.message.edit_text(text, reply_markup=anime_actions(aid, not favorite))
     await c.answer()
 
 
 @router.callback_query(F.data.startswith('episodes:'))
 async def episodes(c: CallbackQuery, db, settings):
-    _, aid, p = c.data.split(':')
-    aid, p = int(aid), int(p)
+    try:
+        _, aid, p = c.data.split(':')
+        aid, p = int(aid), max(0, int(p))
+    except (ValueError, IndexError):
+        return await c.answer('❌ Qism sahifasi xatosi.', show_alert=True)
+    a = await db.anime.get(aid)
+    if not a or a.status == 'deleted':
+        return await c.answer('Anime topilmadi.', show_alert=True)
     es = await db.episodes.list(aid, p * settings.pagination_size, settings.pagination_size)
     await c.message.edit_text('📺 <b>Qismlar</b>\n\nKerakli qismni tanlang:', reply_markup=episodes_page(aid, es, p, settings.pagination_size))
     await c.answer()
@@ -124,8 +127,11 @@ async def episodes(c: CallbackQuery, db, settings):
 
 @router.callback_query(F.data.startswith('ep_page:'))
 async def ep_page(c: CallbackQuery, db, settings):
-    _, aid, p = c.data.split(':')
-    aid, p = int(aid), int(p)
+    try:
+        _, aid, p = c.data.split(':')
+        aid, p = int(aid), max(0, int(p))
+    except (ValueError, IndexError):
+        return await c.answer('❌ Sahifa xatosi.', show_alert=True)
     es = await db.episodes.list(aid, p * settings.pagination_size, settings.pagination_size)
     await c.message.edit_reply_markup(reply_markup=episodes_page(aid, es, p, settings.pagination_size))
     await c.answer()
@@ -133,11 +139,14 @@ async def ep_page(c: CallbackQuery, db, settings):
 
 @router.callback_query(F.data.startswith('episode:'))
 async def episode(c: CallbackQuery, db, settings):
-    _, aid, num = c.data.split(':')
-    aid, num = int(aid), int(num)
+    try:
+        _, aid, num = c.data.split(':')
+        aid, num = int(aid), int(num)
+    except (ValueError, IndexError):
+        return await c.answer('❌ Qism ID xatosi.', show_alert=True)
     e = await db.episodes.get(aid, num)
     a = await db.anime.get(aid)
-    if not e or not a:
+    if not e or not a or a.status == 'deleted':
         return await c.answer('Qism topilmadi.', show_alert=True)
     e.views += 1
     await db.s.commit()
@@ -151,7 +160,13 @@ async def episode(c: CallbackQuery, db, settings):
 
 @router.callback_query(F.data.startswith('fav:'))
 async def favorite(c: CallbackQuery, db, settings):
-    aid = int(c.data.split(':')[1])
+    try:
+        aid = int(c.data.split(':', 1)[1])
+    except (ValueError, IndexError):
+        return await c.answer('❌ Anime ID xatosi.', show_alert=True)
+    a = await db.anime.get(aid)
+    if not a or a.status == 'deleted':
+        return await c.answer('Anime topilmadi.', show_alert=True)
     u = await db.user.upsert(c.from_user.id, c.from_user.username, c.from_user.first_name, is_admin(c.from_user.id, settings))
     added = await db.fav.toggle(u.id, aid)
     await c.answer('⭐ Sevimlilarga qo‘shildi.' if added else '☆ Sevimlilardan chiqarildi.')
@@ -172,9 +187,7 @@ async def favorites_show(m, db, settings, edit=False):
     u = await db.user.upsert(m.from_user.id, m.from_user.username, m.from_user.first_name, is_admin(m.from_user.id, settings))
     items = await db.fav.list(u.id)
     text = '⭐ <b>Sevimlilar</b>\n\n' + ('Ro‘yxat bo‘sh.' if not items else '\n'.join(f'🎬 {a.title}' for a in items))
-    markup = inline_home(is_admin(m.from_user.id, settings))
-    if items:
-        markup = ikb([[(a.title, f'anime:{a.id}')] for a in items] + [[('🏠 Bosh menyu', 'home')]])
+    markup = ikb([[(a.title, f'anime:{a.id}')] for a in items] + [[('🏠 Bosh menyu', 'home')]])
     if edit:
         await m.edit_text(text, reply_markup=markup)
     else:
@@ -226,22 +239,13 @@ async def search(m: Message, state: FSMContext, db, settings):
     await m.answer(text, reply_markup=ikb([[(a.title, f'anime:{a.id}')] for a in items] + [[('🏠 Bosh menyu', 'home')]]))
 
 
-@router.message(F.text == '🎭 Janrlar')
-async def genres(m: Message, db, settings):
-    rows = (await db.session.execute(select(Anime.genre).where(Anime.genre.is_not(None), Anime.status != 'deleted'))).scalars().all()
-    vals = sorted({genre.strip() for value in rows for genre in value.split(',') if genre.strip()})
-    if not vals:
-        return await m.answer('🎭 <b>Janrlar</b>\n\nJanrlar hali kiritilmagan.', reply_markup=main_menu(is_admin(m.from_user.id, settings), settings.webapp_url))
-    await m.answer('🎭 <b>Janrlar</b>\n\n' + '\n'.join(f'• {genre}' for genre in vals), reply_markup=main_menu(is_admin(m.from_user.id, settings), settings.webapp_url))
-
-
 @router.message(F.text == '📺 Davom ettirish')
 async def continue_watch(m: Message, db, settings):
     u = await db.user.upsert(m.from_user.id, m.from_user.username, m.from_user.first_name, is_admin(m.from_user.id, settings))
-    p = (await db.session.execute(select(WatchProgress, Anime).join(Anime, Anime.id == WatchProgress.anime_id).where(WatchProgress.user_id == u.id).order_by(WatchProgress.updated_at.desc()))).all()
-    if not p:
+    rows = (await db.session.execute(select(WatchProgress, Anime).join(Anime, Anime.id == WatchProgress.anime_id).where(WatchProgress.user_id == u.id, Anime.status != 'deleted').order_by(WatchProgress.updated_at.desc()))).all()
+    if not rows:
         return await m.answer('📺 Hali davom ettiriladigan anime yo‘q.')
-    await m.answer('📺 <b>Davom ettirish</b>\n\n' + '\n'.join(f'🎬 {a.title} — {x.episode_number}-qism' for x, a in p), reply_markup=ikb([[(f'▶️ {a.title}', f'episode:{a.id}:{x.episode_number}')] for x, a in p]))
+    await m.answer('📺 <b>Davom ettirish</b>\n\n' + '\n'.join(f'🎬 {a.title} — {p.episode_number}-qism' for p, a in rows), reply_markup=ikb([[(f'▶️ {a.title}', f'episode:{a.id}:{p.episode_number}')] for p, a in rows] + [[('🏠 Bosh menyu', 'home')]]))
 
 
 @router.message(F.text == '👤 Profil')
@@ -260,33 +264,5 @@ async def home(c: CallbackQuery, settings):
 
 @router.callback_query(F.data == 'help')
 async def help_callback(c: CallbackQuery, settings):
-    await c.message.edit_text('ℹ️ <b>AniEasy yordam</b>\n\nPastdagi menyu orqali anime qidiring, sevimliga saqlang va qismni davom ettiring.', reply_markup=inline_home(is_admin(c.from_user.id, settings)))
-    await c.answer()
-
-
-@router.callback_query(F.data == 'genres')
-async def genres_callback(c: CallbackQuery, db, settings):
-    rows = (await db.session.execute(select(Anime.genre).where(Anime.genre.is_not(None), Anime.status != 'deleted'))).scalars().all()
-    vals = sorted({genre.strip() for value in rows for genre in value.split(',') if genre.strip()})
-    text = '🎭 <b>Janrlar</b>\n\n' + ('\n'.join(f'• {genre}' for genre in vals) if vals else 'Janrlar hali kiritilmagan.')
-    await c.message.edit_text(text, reply_markup=inline_home(is_admin(c.from_user.id, settings)))
-    await c.answer()
-
-
-@router.callback_query(F.data == 'continue')
-async def continue_callback(c: CallbackQuery, db, settings):
-    u = await db.user.upsert(c.from_user.id, c.from_user.username, c.from_user.first_name, is_admin(c.from_user.id, settings))
-    p = (await db.session.execute(select(WatchProgress, Anime).join(Anime, Anime.id == WatchProgress.anime_id).where(WatchProgress.user_id == u.id).order_by(WatchProgress.updated_at.desc()))).all()
-    text = '📺 <b>Davom ettirish</b>\n\n' + ('Hali tarix yo‘q.' if not p else '\n'.join(f'🎬 {a.title} — {x.episode_number}-qism' for x, a in p))
-    markup = ikb([[(f'▶️ {a.title}', f'episode:{a.id}:{x.episode_number}')] for x, a in p] + [[('🏠 Bosh menyu', 'home')]])
-    await c.message.edit_text(text, reply_markup=markup)
-    await c.answer()
-
-
-@router.callback_query(F.data == 'profile')
-async def profile_callback(c: CallbackQuery, db, settings):
-    u = await db.user.upsert(c.from_user.id, c.from_user.username, c.from_user.first_name, is_admin(c.from_user.id, settings))
-    favs = len(await db.fav.list(u.id))
-    views = (await db.session.execute(select(func.coalesce(func.sum(Episode.views), 0)))).scalar_one()
-    await c.message.edit_text(f'👤 <b>Profil</b>\n\n🆔 ID: <code>{u.telegram_id}</code>\n⭐ Sevimlilar: {favs}\n👁 Jami ko‘rishlar: {views}', reply_markup=inline_home(is_admin(c.from_user.id, settings)))
+    await c.message.edit_text('ℹ️ <b>AniEasy yordam</b>\n\nPastdagi menyu orqali anime qidiring, sevimliga saqlang va davom ettiring.', reply_markup=inline_home(is_admin(c.from_user.id, settings)))
     await c.answer()
