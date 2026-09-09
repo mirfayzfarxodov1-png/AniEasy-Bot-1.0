@@ -39,9 +39,10 @@ def load_settings() -> Settings:
     if not token:
         raise RuntimeError('BOT_TOKEN .env faylida berilmagan.')
     mandatory = tuple(x.strip() for x in (os.getenv('MANDATORY_CHANNELS') or '').split(',') if x.strip())
+    database_url = (os.getenv('DATABASE_URL') or 'sqlite+aiosqlite:///./data/anime_bot.db').strip()
     return Settings(
         bot_token=token,
-        database_url=(os.getenv('DATABASE_URL') or 'sqlite+aiosqlite:///./anime_bot.db').strip(),
+        database_url=database_url,
         admin_ids=_ids(os.getenv('ADMIN_IDS') or ''),
         owner_id=_optional_int(os.getenv('OWNER_ID') or ''),
         channel_id=_optional_int(os.getenv('CHANNEL_ID') or ''),
