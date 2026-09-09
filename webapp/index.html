@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AniEasy Web</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:#09090b;color:#fff}main{max-width:720px;margin:auto;padding:28px 18px 40px}.hero{padding:24px;border:1px solid #27272a;border-radius:24px;background:linear-gradient(145deg,#18181b,#0f0f11);box-shadow:0 20px 60px #0008}h1{margin:0 0 8px;font-size:32px}.muted{color:#a1a1aa}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}.card{padding:18px;border:1px solid #27272a;border-radius:18px;background:#111113;cursor:pointer}.card b{display:block;margin-bottom:6px}.card:hover{background:#18181b}button{width:100%;margin-top:20px;border:0;border-radius:14px;padding:14px;background:#fff;color:#09090b;font-weight:700;font-size:15px}
+</style></head>
+<body><main>
+<section class="hero"><h1>🎬 AniEasy</h1><div class="muted">Anime katalogi va tezkor boshqaruv</div>
+<div class="grid"><div class="card" onclick="tg.close()"><b>🎬 Anime</b><span class="muted">Katalogni botdan oching</span></div><div class="card" onclick="tg.close()"><b>🔎 Qidirish</b><span class="muted">Anime topish</span></div><div class="card" onclick="tg.close()"><b>⭐ Sevimlilar</b><span class="muted">Saqlangan anime</span></div><div class="card" onclick="tg.close()"><b>📺 Davom ettirish</b><span class="muted">Ko‘rishni davom ettiring</span></div></div>
+<button onclick="tg.close()">Telegram botga qaytish</button></section></main>
+<script>const tg=window.Telegram?.WebApp;if(tg){tg.ready();tg.expand();}</script></body></html>
