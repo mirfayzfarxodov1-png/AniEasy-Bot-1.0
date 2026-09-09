@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
 
 def ikb(rows):
@@ -7,38 +7,41 @@ def ikb(rows):
 
 def main_menu(admin=False, webapp_url=None):
     rows = [
-        [KeyboardButton(text='🎬 Anime'), KeyboardButton(text='🔎 Qidirish')],
-        [KeyboardButton(text='⭐ Sevimlilar'), KeyboardButton(text='🆕 Yangiliklar')],
-        [KeyboardButton(text='🎭 Janrlar'), KeyboardButton(text='📺 Davom ettirish')],
-        [KeyboardButton(text='👤 Profil'), KeyboardButton(text='ℹ️ Yordam')],
-        [KeyboardButton(text='🔥 Top anime'), KeyboardButton(text='🎲 Tasodifiy')],
-        [KeyboardButton(text='📅 Yangi qismlar'), KeyboardButton(text='📈 Trend')],
-        [KeyboardButton(text='🕘 Tarix'), KeyboardButton(text='🏷 Janr bo‘yicha')],
-        [KeyboardButton(text='🔔 Yangiliklar obunasi'), KeyboardButton(text='🌟 Premium')],
-        [KeyboardButton(text='📌 Saqlangan'), KeyboardButton(text='🎯 Tavsiyalar')],
-        [KeyboardButton(text='🧭 Navigatsiya'), KeyboardButton(text='📊 Bot statistikasi')],
-        [KeyboardButton(text='📝 So‘rov yuborish'), KeyboardButton(text='💬 Aloqa')],
-        [KeyboardButton(text='🎨 Tema'), KeyboardButton(text='⚡ Tezkor menyu')],
-        [KeyboardButton(text='📚 Qo‘llanma'), KeyboardButton(text='🆘 Muammo haqida')],
+        [('🎬 Anime', 'anime'), ('🔎 Qidirish', 'search')],
+        [('⭐ Sevimlilar', 'favorites'), ('🆕 Yangiliklar', 'latest')],
+        [('🎭 Janrlar', 'genres'), ('📺 Davom ettirish', 'continue')],
+        [('👤 Profil', 'profile'), ('ℹ️ Yordam', 'help')],
+        [('🔥 Top anime', 'top'), ('🎲 Tasodifiy', 'random')],
+        [('📅 Yangi qismlar', 'new_eps'), ('📈 Trend', 'trend')],
+        [('🕘 Tarix', 'history'), ('🏷 Janrlar', 'genres')],
+        [('🔔 Yangiliklar', 'notify'), ('🌟 Premium', 'premium')],
+        [('📌 Saqlangan', 'favorites'), ('🎯 Tavsiyalar', 'recommend')],
+        [('📊 Statistika', 'bot_stats'), ('📝 So‘rov', 'request')],
+        [('💬 Aloqa', 'contact'), ('🎨 Tema', 'theme')],
+        [('⚡ Tezkor menyu', 'quick'), ('📚 Qo‘llanma', 'guide')],
+        [('🆘 Muammo', 'problem'), ('🏠 Bosh menyu', 'home')],
     ]
-    if webapp_url:
-        rows.append([KeyboardButton(text='🌐 AniEasy Web', web_app=WebAppInfo(url=webapp_url))])
     if admin:
-        rows.append([KeyboardButton(text='👑 Admin panel')])
-    return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True, is_persistent=True, input_field_placeholder='Bo‘limni tanlang…')
+        rows.append([('👑 Admin panel', 'admin')])
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=t) for t, _ in row] for row in rows],
+        resize_keyboard=True, is_persistent=True,
+        input_field_placeholder='Bo‘limni tanlang…'
+    )
 
 
 def admin_menu():
-    return ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text='➕ Anime qo‘shish'), KeyboardButton(text='📚 Anime boshqarish')],
-        [KeyboardButton(text='📺 Qismlar'), KeyboardButton(text='✏️ Tahrirlash')],
-        [KeyboardButton(text='🗑 O‘chirish'), KeyboardButton(text='📊 Statistika')],
-        [KeyboardButton(text='👥 Foydalanuvchilar'), KeyboardButton(text='📢 Xabar yuborish')],
-        [KeyboardButton(text='⚙️ Sozlamalar'), KeyboardButton(text='💾 Backup')],
-        [KeyboardButton(text='📣 Kanal'), KeyboardButton(text='🛡 Adminlar')],
-        [KeyboardButton(text='➕ Admin qo‘shish'), KeyboardButton(text='➖ Admin chiqarish')],
-        [KeyboardButton(text='🏠 Bosh menyu')],
-    ], resize_keyboard=True, is_persistent=True, input_field_placeholder='Admin funksiyasini tanlang…')
+    rows = [
+        [('➕ Anime qo‘shish', 'admin_add'), ('📚 Anime boshqarish', 'admin_animes')],
+        [('📺 Qismlar', 'admin_eps'), ('✏️ Tahrirlash', 'admin_edit')],
+        [('🗑 O‘chirish', 'admin_delete'), ('📊 Statistika', 'admin_stats')],
+        [('👥 Foydalanuvchilar', 'admin_users'), ('📢 Xabar yuborish', 'admin_broadcast')],
+        [('⚙️ Sozlamalar', 'admin_settings'), ('💾 Backup', 'admin_backup')],
+        [('📣 Kanal', 'admin_channel'), ('🛡 Adminlar', 'admin_list')],
+        [('➕ Admin qo‘shish', 'admin_add_user'), ('➖ Admin chiqarish', 'admin_remove_user')],
+        [('📢 Post qilish', 'post_menu'), ('🏠 Bosh menyu', 'home')],
+    ]
+    return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=t) for t, _ in row] for row in rows], resize_keyboard=True, is_persistent=True, input_field_placeholder='Admin funksiyasini tanlang…')
 
 
 def inline_home(admin=False):
@@ -48,7 +51,7 @@ def inline_home(admin=False):
 
 
 def anime_actions(aid, favorite=True):
-    return ikb([[('📺 Qismlar', f'episodes:{aid}:0'), ('⭐ Sevimli' if favorite else '☆ Sevimlidan chiqarish', f'fav:{aid}')], [('✏️ Tahrirlash', f'edit_anime:{aid}'), ('🗑 O‘chirish', f'del_anime:{aid}')], [('⬅️ Orqaga', 'anime'), ('🏠 Bosh menyu', 'home')]])
+    return ikb([[('📺 Qismlar', f'episodes:{aid}:0'), ('⭐ Sevimli' if favorite else '☆ Sevimlidan chiqarish', f'fav:{aid}')], [('⬅️ Orqaga', 'anime'), ('🏠 Bosh menyu', 'home')]])
 
 
 def episodes_page(aid, episodes, page, size):
