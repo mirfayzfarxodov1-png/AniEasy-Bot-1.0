@@ -19,9 +19,9 @@ jobs:
       OWNER_ID: ${{ secrets.OWNER_ID }}
       CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
       LOG_CHANNEL_ID: ${{ secrets.LOG_CHANNEL_ID }}
-      PAGINATION_SIZE: ${{ secrets.PAGINATION_SIZE }}
-      DESCRIPTION_TEMPLATE: ${{ secrets.DESCRIPTION_TEMPLATE }}
-      LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
+      PAGINATION_SIZE: "10"
+      DESCRIPTION_TEMPLATE: "🎬 {anime_name}\n📺 {episode}-qism"
+      LOG_LEVEL: "INFO"
       DATABASE_URL: sqlite+aiosqlite:///./anime_bot.db
     steps:
       - name: Checkout
