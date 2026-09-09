@@ -1,14 +1,21 @@
 <!doctype html>
 <html lang="uz">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AniEasy Web</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AniEasy — Anime Platform</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:#09090b;color:#fff}main{max-width:720px;margin:auto;padding:28px 18px 40px}.hero{padding:24px;border:1px solid #27272a;border-radius:24px;background:linear-gradient(145deg,#18181b,#0f0f11);box-shadow:0 20px 60px #0008}h1{margin:0 0 8px;font-size:32px}.muted{color:#a1a1aa}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}.card{padding:18px;border:1px solid #27272a;border-radius:18px;background:#111113;cursor:pointer}.card b{display:block;margin-bottom:6px}.card:hover{background:#18181b}button{width:100%;margin-top:20px;border:0;border-radius:14px;padding:14px;background:#fff;color:#09090b;font-weight:700;font-size:15px}
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,sans-serif;background:radial-gradient(circle at 20% 0%,#25204a 0,#09090b 42%),#09090b;color:#fff;min-height:100vh}main{width:min(1180px,100%);margin:auto;padding:24px 20px 56px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.logo{font-size:24px;font-weight:900}.pill{border:1px solid #30303a;background:#15151b;padding:8px 12px;border-radius:999px;color:#c7c7d1;font-size:12px}.hero{padding:34px;border:1px solid #2c2c38;border-radius:30px;background:linear-gradient(135deg,#191827dd,#101014dd);box-shadow:0 30px 90px #0008;min-height:330px;display:flex;flex-direction:column;justify-content:center}.eyebrow{color:#a78bfa;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:12px}.hero h1{font-size:clamp(42px,8vw,76px);line-height:.95;margin:12px 0}.hero p{max-width:680px;color:#aaaab7;font-size:17px;line-height:1.6}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}.btn{border:0;border-radius:16px;padding:14px 20px;font-weight:800;cursor:pointer}.primary{background:#fff;color:#09090b}.secondary{background:#252530;color:#fff;border:1px solid #383844}.section-title{margin:34px 0 14px;font-size:23px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{min-height:150px;padding:20px;border:1px solid #292933;border-radius:22px;background:#121217;transition:.2s;cursor:pointer}.card:hover{transform:translateY(-3px);background:#18181f}.icon{font-size:30px;margin-bottom:18px}.card b{display:block;font-size:17px;margin-bottom:6px}.muted{color:#9999a6;line-height:1.5}.wide{grid-column:span 2}.footer{margin-top:30px;text-align:center;color:#666674;font-size:12px}@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.hero{min-height:390px;padding:26px}.wide{grid-column:span 2}}@media(max-width:480px){main{padding:14px}.grid{grid-template-columns:1fr}.wide{grid-column:span 1}.hero h1{font-size:48px}}
 </style></head>
 <body><main>
-<section class="hero"><h1>🎬 AniEasy</h1><div class="muted">Anime katalogi va tezkor boshqaruv</div>
-<div class="grid"><div class="card" onclick="tg.close()"><b>🎬 Anime</b><span class="muted">Katalogni botdan oching</span></div><div class="card" onclick="tg.close()"><b>🔎 Qidirish</b><span class="muted">Anime topish</span></div><div class="card" onclick="tg.close()"><b>⭐ Sevimlilar</b><span class="muted">Saqlangan anime</span></div><div class="card" onclick="tg.close()"><b>📺 Davom ettirish</b><span class="muted">Ko‘rishni davom ettiring</span></div></div>
-<button onclick="tg.close()">Telegram botga qaytish</button></section></main>
-<script>const tg=window.Telegram?.WebApp;if(tg){tg.ready();tg.expand();}</script></body></html>
+<div class="top"><div class="logo">🎬 AniEasy</div><div class="pill">BOT 1.0 • ONLINE UI</div></div>
+<section class="hero"><div class="eyebrow">Anime platform</div><h1>Anime olami.<br>Bir joyda.</h1><p>AniEasy orqali anime katalogini ko‘ring, qidirib toping, sevimlilarga saqlang va tomosha qilishni davom ettiring.</p><div class="actions"><button class="btn primary" onclick="send('anime')">🎬 Anime katalogi</button><button class="btn secondary" onclick="send('search')">🔎 Anime qidirish</button></div></section>
+<h2 class="section-title">Tezkor bo‘limlar</h2><div class="grid">
+<div class="card" onclick="send('anime')"><div class="icon">🎬</div><b>Anime</b><span class="muted">Barcha anime katalogi</span></div>
+<div class="card" onclick="send('search')"><div class="icon">🔎</div><b>Qidirish</b><span class="muted">Nom yoki janr bo‘yicha izlash</span></div>
+<div class="card" onclick="send('favorites')"><div class="icon">⭐</div><b>Sevimlilar</b><span class="muted">Saqlangan anime ro‘yxati</span></div>
+<div class="card" onclick="send('latest')"><div class="icon">🆕</div><b>Yangiliklar</b><span class="muted">Eng yangi qo‘shilganlar</span></div>
+<div class="card wide" onclick="send('continue')"><div class="icon">▶️</div><b>Davom ettirish</b><span class="muted">Oxirgi ko‘rgan animeingizdan davom eting</span></div>
+<div class="card wide" onclick="send('help')"><div class="icon">❓</div><b>Yordam</b><span class="muted">AniEasy imkoniyatlari va qo‘llanma</span></div>
+</div><div class="footer">AniEasy Bot 1.0 • Telegram Mini App</div>
+</main><script>const tg=window.Telegram?.WebApp;if(tg){tg.ready();tg.expand();tg.setHeaderColor('#09090b');tg.setBackgroundColor('#09090b');}function send(action){if(tg?.sendData)tg.sendData(action);else alert('Telegram Mini App ichida oching.');}</script></body></html>
