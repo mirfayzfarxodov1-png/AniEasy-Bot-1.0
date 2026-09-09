@@ -1,0 +1,36 @@
+name: AniEasy Bot CI
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      DATABASE_URL: sqlite+aiosqlite:///./test.db
+      ADMIN_IDS: ${{ secrets.ADMIN_IDS }}
+      OWNER_ID: ${{ secrets.OWNER_ID }}
+      CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+      LOG_CHANNEL_ID: ${{ secrets.LOG_CHANNEL_ID }}
+      PAGINATION_SIZE: "10"
+      LOG_LEVEL: INFO
+    steps:
+      - name: Repositoryni yuklash
+        uses: actions/checkout@v4
+
+      - name: Python o‘rnatish
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Kutubxonalarni o‘rnatish
+        run: pip install -r requirements.txt
+
+      - name: Testlarni ishga tushirish
+        run: pytest -q
+
+      - name: Import tekshiruvi
+        run: python -m compileall -q app
