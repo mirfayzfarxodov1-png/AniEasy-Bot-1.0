@@ -5,41 +5,30 @@ def ikb(rows):
     return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=t, callback_data=d) for t, d in row] for row in rows])
 
 
+def url_ikb(rows):
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=t, url=u) for t, u in row] for row in rows])
+
+
 def main_menu(admin=False, webapp_url=None):
     rows = [
-        [('🎬 Anime', 'anime'), ('🔎 Qidirish', 'search')],
-        [('⭐ Sevimlilar', 'favorites'), ('🆕 Yangiliklar', 'latest')],
-        [('🎭 Janrlar', 'genres'), ('📺 Davom ettirish', 'continue')],
-        [('👤 Profil', 'profile'), ('ℹ️ Yordam', 'help')],
-        [('🔥 Top anime', 'top'), ('🎲 Tasodifiy', 'random')],
-        [('📅 Yangi qismlar', 'new_eps'), ('📈 Trend', 'trend')],
-        [('🕘 Tarix', 'history'), ('🏷 Janrlar', 'genres')],
-        [('🔔 Yangiliklar', 'notify'), ('🌟 Premium', 'premium')],
-        [('📌 Saqlangan', 'favorites'), ('🎯 Tavsiyalar', 'recommend')],
-        [('📊 Statistika', 'bot_stats'), ('📝 So‘rov', 'request')],
-        [('💬 Aloqa', 'contact'), ('🎨 Tema', 'theme')],
-        [('⚡ Tezkor menyu', 'quick'), ('📚 Qo‘llanma', 'guide')],
+        [('🎬 Anime', 'anime'), ('🔎 Qidirish', 'search')], [('⭐ Sevimlilar', 'favorites'), ('🆕 Yangiliklar', 'latest')],
+        [('🎭 Janrlar', 'genres'), ('📺 Davom ettirish', 'continue')], [('👤 Profil', 'profile'), ('ℹ️ Yordam', 'help')],
+        [('🔥 Top anime', 'top'), ('🎲 Tasodifiy', 'random')], [('📅 Yangi qismlar', 'new_eps'), ('📈 Trend', 'trend')],
+        [('🕘 Tarix', 'history'), ('🏷 Janrlar', 'genres')], [('🔔 Yangiliklar', 'notify'), ('🌟 Premium', 'premium')],
+        [('📌 Saqlangan', 'favorites'), ('🎯 Tavsiyalar', 'recommend')], [('📊 Statistika', 'bot_stats'), ('📝 So‘rov', 'request')],
+        [('💬 Aloqa', 'contact'), ('🎨 Tema', 'theme')], [('⚡ Tezkor menyu', 'quick'), ('📚 Qo‘llanma', 'guide')],
         [('🆘 Muammo', 'problem'), ('🏠 Bosh menyu', 'home')],
     ]
-    if admin:
-        rows.append([('👑 Admin panel', 'admin')])
-    return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text=t) for t, _ in row] for row in rows],
-        resize_keyboard=True, is_persistent=True,
-        input_field_placeholder='Bo‘limni tanlang…'
-    )
+    if admin: rows.append([('👑 Admin panel', 'admin')])
+    return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=t) for t, _ in row] for row in rows], resize_keyboard=True, is_persistent=True, input_field_placeholder='Bo‘limni tanlang…')
 
 
 def admin_menu():
     rows = [
-        [('➕ Anime qo‘shish', 'admin_add'), ('📚 Anime boshqarish', 'admin_animes')],
-        [('📺 Qismlar', 'admin_eps'), ('✏️ Tahrirlash', 'admin_edit')],
-        [('🗑 O‘chirish', 'admin_delete'), ('📊 Statistika', 'admin_stats')],
-        [('👥 Foydalanuvchilar', 'admin_users'), ('📢 Xabar yuborish', 'admin_broadcast')],
-        [('⚙️ Sozlamalar', 'admin_settings'), ('💾 Backup', 'admin_backup')],
-        [('📣 Kanal', 'admin_channel'), ('🛡 Adminlar', 'admin_list')],
-        [('➕ Admin qo‘shish', 'admin_add_user'), ('➖ Admin chiqarish', 'admin_remove_user')],
-        [('📢 Post qilish', 'post_menu'), ('🏠 Bosh menyu', 'home')],
+        [('➕ Anime qo‘shish', 'admin_add'), ('📚 Anime boshqarish', 'admin_animes')], [('📺 Qismlar', 'admin_eps'), ('✏️ Tahrirlash', 'admin_edit')],
+        [('🗑 O‘chirish', 'admin_delete'), ('📊 Statistika', 'admin_stats')], [('👥 Foydalanuvchilar', 'admin_users'), ('📢 Xabar yuborish', 'admin_broadcast')],
+        [('⚙️ Sozlamalar', 'admin_settings'), ('💾 Backup', 'admin_backup')], [('📣 Kanal', 'admin_channel'), ('🛡 Adminlar', 'admin_list')],
+        [('➕ Admin qo‘shish', 'admin_add_user'), ('➖ Admin chiqarish', 'admin_remove_user')], [('📢 Post qilish', 'post_menu'), ('🏠 Bosh menyu', 'home')],
     ]
     return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=t) for t, _ in row] for row in rows], resize_keyboard=True, is_persistent=True, input_field_placeholder='Admin funksiyasini tanlang…')
 
