@@ -19,6 +19,7 @@ jobs:
       OWNER_ID: ${{ secrets.OWNER_ID }}
       CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
       LOG_CHANNEL_ID: ${{ secrets.LOG_CHANNEL_ID }}
+      WEBAPP_URL: ${{ secrets.WEBAPP_URL }}
       PAGINATION_SIZE: "10"
       DESCRIPTION_TEMPLATE: "🎬 {anime_name}\n📺 {episode}-qism"
       LOG_LEVEL: "INFO"
@@ -26,15 +27,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
-
       - name: Install dependencies
         run: pip install -r requirements.txt
-
       - name: Start AniEasy Bot 1.0
         run: python -m app.main
