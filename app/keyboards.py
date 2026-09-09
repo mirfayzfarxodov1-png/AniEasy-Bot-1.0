@@ -11,6 +11,15 @@ def main_menu(admin=False, webapp_url=None):
         [KeyboardButton(text='⭐ Sevimlilar'), KeyboardButton(text='🆕 Yangiliklar')],
         [KeyboardButton(text='🎭 Janrlar'), KeyboardButton(text='📺 Davom ettirish')],
         [KeyboardButton(text='👤 Profil'), KeyboardButton(text='ℹ️ Yordam')],
+        [KeyboardButton(text='🔥 Top anime'), KeyboardButton(text='🎲 Tasodifiy')],
+        [KeyboardButton(text='📅 Yangi qismlar'), KeyboardButton(text='📈 Trend')],
+        [KeyboardButton(text='🕘 Tarix'), KeyboardButton(text='🏷 Janr bo‘yicha')],
+        [KeyboardButton(text='🔔 Yangiliklar obunasi'), KeyboardButton(text='🌟 Premium')],
+        [KeyboardButton(text='📌 Saqlangan'), KeyboardButton(text='🎯 Tavsiyalar')],
+        [KeyboardButton(text='🧭 Navigatsiya'), KeyboardButton(text='📊 Bot statistikasi')],
+        [KeyboardButton(text='📝 So‘rov yuborish'), KeyboardButton(text='💬 Aloqa')],
+        [KeyboardButton(text='🎨 Tema'), KeyboardButton(text='⚡ Tezkor menyu')],
+        [KeyboardButton(text='📚 Qo‘llanma'), KeyboardButton(text='🆘 Muammo haqida')],
     ]
     if webapp_url:
         rows.append([KeyboardButton(text='🌐 AniEasy Web', web_app=WebAppInfo(url=webapp_url))])
@@ -27,6 +36,7 @@ def admin_menu():
         [KeyboardButton(text='👥 Foydalanuvchilar'), KeyboardButton(text='📢 Xabar yuborish')],
         [KeyboardButton(text='⚙️ Sozlamalar'), KeyboardButton(text='💾 Backup')],
         [KeyboardButton(text='📣 Kanal'), KeyboardButton(text='🛡 Adminlar')],
+        [KeyboardButton(text='➕ Admin qo‘shish'), KeyboardButton(text='➖ Admin chiqarish')],
         [KeyboardButton(text='🏠 Bosh menyu')],
     ], resize_keyboard=True, is_persistent=True, input_field_placeholder='Admin funksiyasini tanlang…')
 
