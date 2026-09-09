@@ -6,13 +6,12 @@ from aiogram.fsm.context import FSMContext
 from aiogram.enums import ChatMemberStatus
 from sqlalchemy import func, select
 from .states import AddAnime, Upload, Broadcast, EditAnime, AdminManage, Post
-from .keyboards import admin_menu, ikb
+from .keyboards import admin_menu, ikb, url_ikb
 from .services import parse_episode
 from .models import Episode, User
 from .access import is_admin, is_owner, add_admin, remove_admin
 
 router=Router()
-
 def admin_only(uid,settings): return is_admin(uid,settings)
 def deny(m): return m.answer('❌ Bu bo‘lim faqat adminlar uchun.')
 def panel_text(): return '👑 <b>AniEasy Admin Panel</b>\n\nBoshqaruv bo‘limini tanlang:'
@@ -80,9 +79,7 @@ async def replace_cancel(c:CallbackQuery,state:FSMContext): await state.clear();
 @router.message(F.text=='📚 Anime boshqarish')
 async def admin_animes(m:Message,db,settings):
     if not admin_only(m.from_user.id,settings): return await deny(m)
-    items=await db.anime.list(0,settings.pagination_size)
-    text='📚 <b>Anime boshqaruvi</b>\n\n'+('Ro‘yxat bo‘sh.' if not items else '\n'.join(f'• {a.title} — {await db.episodes.count(a.id)} qism' for a in items))
-    await m.answer(text,reply_markup=ikb([[(f'🎬 {a.title}',f'anime:{a.id}')] for a in items]+[[('🏠 Admin','admin')]]))
+    items=await db.anime.list(0,settings.pagination_size); text='📚 <b>Anime boshqaruvi</b>\n\n'+('Ro‘yxat bo‘sh.' if not items else '\n'.join(f'• {a.title} — {await db.episodes.count(a.id)} qism' for a in items)); await m.answer(text,reply_markup=ikb([[(f'🎬 {a.title}',f'anime:{a.id}')] for a in items]+[[('🏠 Admin','admin')]]))
 
 @router.message(F.text=='📺 Qismlar')
 async def episode_manager(m:Message,db,settings):
@@ -92,8 +89,7 @@ async def episode_manager(m:Message,db,settings):
 @router.message(F.text=='📊 Statistika')
 async def stats(m:Message,db,settings):
     if not admin_only(m.from_user.id,settings): return await deny(m)
-    ac=await db.anime.count(); ec=(await db.session.execute(select(func.count()).select_from(Episode))).scalar_one(); uc=(await db.session.execute(select(func.count()).select_from(User))).scalar_one(); views=(await db.session.execute(select(func.coalesce(func.sum(Episode.views),0)))).scalar_one()
-    await m.answer(f'📊 <b>Bot statistikasi</b>\n\n👥 Foydalanuvchilar: {uc}\n🎬 Anime: {ac}\n📺 Qismlar: {ec}\n👁 Ko‘rishlar: {views}',reply_markup=admin_menu())
+    ac=await db.anime.count(); ec=(await db.session.execute(select(func.count()).select_from(Episode))).scalar_one(); uc=(await db.session.execute(select(func.count()).select_from(User))).scalar_one(); views=(await db.session.execute(select(func.coalesce(func.sum(Episode.views),0)))).scalar_one(); await m.answer(f'📊 <b>Bot statistikasi</b>\n\n👥 Foydalanuvchilar: {uc}\n🎬 Anime: {ac}\n📺 Qismlar: {ec}\n👁 Ko‘rishlar: {views}',reply_markup=admin_menu())
 
 @router.message(F.text=='👥 Foydalanuvchilar')
 async def users(m:Message,db,settings):
@@ -118,7 +114,8 @@ async def channel(m:Message,settings):
 @router.message(F.text=='🛡 Adminlar')
 async def admins(m:Message,settings):
     if not admin_only(m.from_user.id,settings): return await deny(m)
-    await m.answer('🛡 <b>Adminlar</b>\n\nKonfiguratsiya adminlari: '+(', '.join(map(str,settings.admin_ids)) or 'yo‘q')+'\nRuntime adminlar: '+(', '.join(map(str, __import__('app.access',fromlist=['RUNTIME_ADMINS']).RUNTIME_ADMINS)) or 'yo‘q'),reply_markup=admin_menu())
+    from .access import RUNTIME_ADMINS
+    await m.answer('🛡 <b>Adminlar</b>\n\nKonfiguratsiya: '+(', '.join(map(str,settings.admin_ids)) or 'yo‘q')+'\nRuntime: '+(', '.join(map(str,RUNTIME_ADMINS)) or 'yo‘q'),reply_markup=admin_menu())
 
 @router.message(F.text=='➕ Admin qo‘shish')
 async def add_admin_start(m:Message,state:FSMContext,settings):
@@ -165,8 +162,7 @@ async def post_start(m:Message,state:FSMContext,settings):
 
 async def resolve_chat(bot,target):
     target=target.strip()
-    if 't.me/' in target:
-        target='@'+target.split('t.me/',1)[1].strip('/').split('/',1)[0]
+    if 't.me/' in target: target='@'+target.split('t.me/',1)[1].strip('/').split('/',1)[0]
     if target and not target.startswith('@') and not target.lstrip('-').isdigit(): target='@'+target
     return await bot.get_chat(target)
 
@@ -181,36 +177,29 @@ async def post_target(m:Message,state:FSMContext,settings,bot):
         chat=await resolve_chat(bot,m.text or '')
         if chat.type not in {'channel','group','supergroup'}: return await m.answer('❌ Faqat kanal yoki guruhga post qilish mumkin.')
         if not await bot_is_admin(bot,chat): return await m.answer('❌ Bot bu chatda admin emas. Avval botga administrator huquqi bering.')
-    except Exception as e:
-        return await m.answer('❌ Kanal/guruh topilmadi yoki botning u chatni tekshirish huquqi yo‘q. @username yoki public t.me link yuboring.')
+    except Exception:
+        return await m.answer('❌ Chat topilmadi yoki tekshirib bo‘lmadi. Public @username, t.me link yoki chat ID yuboring.')
     await state.update_data(target_id=chat.id,target_title=chat.title,target_username=chat.username,target_type=chat.type); await state.set_state(Post.content)
     await m.answer(f'✅ <b>{chat.title}</b> tasdiqlandi.\n\nEndi post matnini yoki video/rasmni caption bilan yuboring:')
 
 @router.message(Post.content)
 async def post_content(m:Message,state:FSMContext,settings,bot):
     if not admin_only(m.from_user.id,settings): return
-    d=await state.get_data(); chat_id=d.get('target_id'); title=d.get('target_title','Kanal')
+    d=await state.get_data(); chat_id=d.get('target_id'); title=d.get('target_title','Chat'); username=d.get('target_username')
     try:
-        if m.video:
-            sent=await bot.send_video(chat_id,m.video.file_id,caption=m.caption or '🎬 AniEasy')
-        elif m.photo:
-            sent=await bot.send_photo(chat_id,m.photo[-1].file_id,caption=m.caption or '')
-        elif m.text:
-            sent=await bot.send_message(chat_id,m.text)
-        else:
-            return await m.answer('❌ Matn, rasm yoki video yuboring.')
-        username=d.get('target_username'); link=f'https://t.me/{username}/{sent.message_id}' if username else None
-        buttons=[[('▶️ Tomosha qilish','watch_main')],[('🤖 Asosiy botga o‘tish','open_main')]]
-        if link: buttons.append([('🔗 Postni ochish',link)])
-        await state.clear(); await m.answer(f'🎉 <b>Post joylandi!</b>\n📍 {title}',reply_markup=ikb(buttons))
+        if m.video: sent=await bot.send_video(chat_id,m.video.file_id,caption=m.caption or '🎬 AniEasy')
+        elif m.photo: sent=await bot.send_photo(chat_id,m.photo[-1].file_id,caption=m.caption or '')
+        elif m.text: sent=await bot.send_message(chat_id,m.text)
+        else: return await m.answer('❌ Matn, rasm yoki video yuboring.')
+        post_link=f'https://t.me/{username}/{sent.message_id}' if username else None
+        me=await bot.get_me(); bot_link=f'https://t.me/{me.username}' if me.username else None
+        rows=[]
+        if bot_link: rows.append([('▶️ Tomosha qilish',bot_link)])
+        if bot_link: rows.append([('🤖 Asosiy botga o‘tish',bot_link)])
+        if post_link: rows.append([('🔗 Postni ochish',post_link)])
+        await state.clear(); await m.answer(f'🎉 <b>Post joylandi!</b>\n📍 {title}',reply_markup=url_ikb(rows) if rows else None)
     except Exception:
-        await m.answer('❌ Post yuborilmadi. Bot hali ham chatda admin ekanini va post yuborish huquqi borligini tekshiring.')
-
-@router.callback_query(F.data=='watch_main')
-async def watch_main(c:CallbackQuery): await c.answer('🤖 Asosiy botdan anime tomosha qilishingiz mumkin.',show_alert=True)
-
-@router.callback_query(F.data=='open_main')
-async def open_main(c:CallbackQuery): await c.message.answer('🤖 Asosiy bot: /start'); await c.answer()
+        await m.answer('❌ Post yuborilmadi. Bot chatda admin va post yuborish huquqiga ega ekanini tekshiring.')
 
 @router.message(Command('cancel'))
 async def cancel_command(m:Message,state:FSMContext): await state.clear(); await m.answer('❌ Amal bekor qilindi.',reply_markup=admin_menu())
