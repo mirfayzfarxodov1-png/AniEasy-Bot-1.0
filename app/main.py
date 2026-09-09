@@ -7,6 +7,7 @@ from aiogram.types import BotCommand
 from .config import load_settings
 from .db import Database
 from .middlewares import DependenciesMiddleware, RateLimitMiddleware
+from .handlers_gate import router as gate_router
 from .handlers_user import router as user_router
 from .handlers_admin import router as admin_router
 from .handlers_extra import router as extra_router
@@ -14,10 +15,7 @@ from .handlers_features import router as features_router
 
 async def main():
     settings = load_settings()
-    logging.basicConfig(
-        level=getattr(logging, settings.log_level.upper(), logging.INFO),
-        format='%(asctime)s | %(levelname)s | %(name)s | %(message)s'
-    )
+    logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO), format='%(asctime)s | %(levelname)s | %(name)s | %(message)s')
     db = Database(settings)
     await db.create_tables()
     bot = Bot(settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
@@ -27,18 +25,12 @@ async def main():
     dep = DependenciesMiddleware(db, settings)
     dp.message.middleware(dep)
     dp.callback_query.middleware(dep)
+    dp.include_router(gate_router)
     dp.include_router(admin_router)
     dp.include_router(extra_router)
     dp.include_router(features_router)
     dp.include_router(user_router)
-    await bot.set_my_commands([
-        BotCommand(command='start', description='Bosh menyu'),
-        BotCommand(command='help', description='Yordam'),
-        BotCommand(command='search', description='Anime qidirish'),
-        BotCommand(command='anime', description='Anime ro‘yxati'),
-        BotCommand(command='favorites', description='Sevimlilar'),
-        BotCommand(command='admin', description='Admin panel')
-    ])
+    await bot.set_my_commands([BotCommand(command='start', description='Bosh menyu'), BotCommand(command='help', description='Yordam'), BotCommand(command='search', description='Anime qidirish'), BotCommand(command='anime', description='Anime ro‘yxati'), BotCommand(command='favorites', description='Sevimlilar'), BotCommand(command='admin', description='Admin panel')])
     try:
         await bot.delete_webhook(drop_pending_updates=False)
         me = await bot.get_me()
