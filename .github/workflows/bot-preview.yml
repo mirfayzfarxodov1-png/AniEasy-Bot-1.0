@@ -26,7 +26,7 @@ jobs:
       PAGINATION_SIZE: "10"
       DESCRIPTION_TEMPLATE: "🎬 {anime_name}\n📺 {episode}-qism"
       LOG_LEVEL: "INFO"
-      DATABASE_URL: sqlite+aiosqlite:///./anime_bot.db
+      DATABASE_URL: "sqlite+aiosqlite:///./anime_bot.db"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
