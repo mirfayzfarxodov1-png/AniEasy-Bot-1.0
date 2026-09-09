@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from .states import AddAnime, Upload, Broadcast, EditAnime
 from .keyboards import admin_menu, ikb
 from .services import parse_episode
-from .models import Episode, User, Anime
+from .models import Episode, User
 
 router=Router()
 
@@ -31,10 +31,10 @@ async def admin_callback(c:CallbackQuery,settings):
 @router.message(F.text=='➕ Anime qo‘shish')
 @router.callback_query(F.data=='admin_add')
 async def add_start(x,state:FSMContext,settings):
-    uid=x.from_user.id
-    if not admin_only(uid,settings): return await (x.answer('❌ Ruxsat yo‘q.',show_alert=True) if isinstance(x,CallbackQuery) else deny(x))
-    await state.set_state(AddAnime.title); msg=x.message if isinstance(x,CallbackQuery) else x
-    await msg.answer('➕ <b>Anime qo‘shish</b>\n\nAnime nomini yuboring:') if isinstance(x,CallbackQuery) else await msg.answer('➕ <b>Anime qo‘shish</b>\n\nAnime nomini yuboring:')
+    if not admin_only(x.from_user.id,settings): return await (x.answer('❌ Ruxsat yo‘q.',show_alert=True) if isinstance(x,CallbackQuery) else deny(x))
+    await state.set_state(AddAnime.title)
+    msg=x.message
+    await msg.answer('➕ <b>Anime qo‘shish</b>\n\nAnime nomini yuboring:')
     if isinstance(x,CallbackQuery): await x.answer()
 
 @router.message(AddAnime.title)
@@ -84,8 +84,9 @@ async def replace_cancel(c:CallbackQuery,state:FSMContext): await state.update_d
 @router.callback_query(F.data=='admin_animes')
 async def admin_animes(x,db,settings):
     if not admin_only(x.from_user.id,settings): return await (x.answer('❌ Ruxsat yo‘q.',show_alert=True) if isinstance(x,CallbackQuery) else deny(x))
-    items=await db.anime.list(0,settings.pagination_size); text='📚 <b>Anime boshqaruvi</b>\n\n'+('Ro‘yxat bo‘sh.' if not items else '\n'.join(f'• {a.title} — {await db.episodes.count(a.id)} qism' for a in items)); markup=ikb([[(f'🎬 {a.title}',f'anime:{a.id}')] for a in items]+[[('🏠 Admin','admin')]]); msg=x.message if isinstance(x,CallbackQuery) else x; await msg.answer(text,reply_markup=markup) if isinstance(x,Message) else await msg.edit_text(text,reply_markup=markup)
-    if isinstance(x,CallbackQuery): await x.answer()
+    items=await db.anime.list(0,settings.pagination_size); text='📚 <b>Anime boshqaruvi</b>\n\n'+('Ro‘yxat bo‘sh.' if not items else '\n'.join(f'• {a.title} — {await db.episodes.count(a.id)} qism' for a in items)); markup=ikb([[(f'🎬 {a.title}',f'anime:{a.id}')] for a in items]+[[('🏠 Admin','admin')]]); msg=x.message
+    if isinstance(x,CallbackQuery): await msg.edit_text(text,reply_markup=markup); await x.answer()
+    else: await msg.answer(text,reply_markup=markup)
 
 @router.message(F.text=='📺 Qismlar')
 async def episode_manager(m:Message,db,settings):
@@ -114,7 +115,7 @@ async def settings(m:Message,settings):
 @router.message(F.text=='💾 Backup')
 async def backup(m:Message,db,settings):
     if not admin_only(m.from_user.id,settings): return await deny(m)
-    ac=await db.anime.count(); ec=(await db.session.execute(select(func.count()).select_from(Episode))).scalar_one(); uc=(await db.session.execute(select(func.count()).select_from(User))).scalar_one(); await m.answer(f'💾 <b>Backup nazorati</b>\n\nDB turi: {settings.database_url.split(":",1)[0]}\nAnime: {ac}\nQismlar: {ec}\nFoydalanuvchilar: {uc}\n\n⚠️ To‘liq fayl backup server/VPS darajasida amalga oshiriladi.',reply_markup=admin_menu())
+    ac=await db.anime.count(); ec=(await db.session.execute(select(func.count()).select_from(Episode))).scalar_one(); uc=(await db.session.execute(select(func.count()).select_from(User))).scalar_one(); await m.answer(f'💾 <b>Backup nazorati</b>\n\nDB: {settings.database_url.split(":",1)[0]}\nAnime: {ac}\nQismlar: {ec}\nFoydalanuvchilar: {uc}\n\n⚠️ Bu preview rejimida backup nazorati. Production VPS uchun avtomatik DB backup qo‘shish mumkin.',reply_markup=admin_menu())
 
 @router.message(F.text=='📣 Kanal')
 async def channel(m:Message,settings):
@@ -144,11 +145,11 @@ async def broadcast(m:Message,state:FSMContext,db,settings,bot):
 async def cancel_command(m:Message,state:FSMContext): await state.clear(); await m.answer('❌ Amal bekor qilindi.',reply_markup=admin_menu())
 
 @router.message(F.text=='✏️ Tahrirlash')
-async def edit_help(m:Message,settings):
+async def edit_help(m:Message,db,settings):
     if not admin_only(m.from_user.id,settings): return await deny(m)
-    await m.answer('✏️ Tahrirlash uchun avval “Anime boshqarish”dan anime tanlang, keyin mavjud tahrirlash tugmasidan foydalaning.',reply_markup=admin_menu())
+    items=await db.anime.list(0,settings.pagination_size); await m.answer('✏️ <b>Tahrirlash uchun anime tanlang:</b>',reply_markup=ikb([[(a.title,f'edit_anime:{a.id}')] for a in items]+[[('👑 Admin','admin')]]))
 
 @router.message(F.text=='🗑 O‘chirish')
-async def delete_help(m:Message,settings):
+async def delete_help(m:Message,db,settings):
     if not admin_only(m.from_user.id,settings): return await deny(m)
-    await m.answer('🗑 O‘chirish uchun “Anime boshqarish”dan anime tanlang. Tasdiqlashsiz hech narsa o‘chirilmaydi.',reply_markup=admin_menu())
+    items=await db.anime.list(0,settings.pagination_size); await m.answer('🗑 <b>O‘chirish uchun anime tanlang:</b>\nTasdiqlashsiz o‘chmaydi.',reply_markup=ikb([[(a.title,f'del_anime:{a.id}')] for a in items]+[[('👑 Admin','admin')]]))
